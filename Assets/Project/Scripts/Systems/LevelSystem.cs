@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 using Zenject;
 
@@ -33,40 +34,40 @@ namespace Elements.Systems
         [Inject]
         public void Initialize()
         {
-            LoadDataAsync().Forget();
+            LoadDataAsync(destroyCancellationToken).Forget();
             levelCount = GetLevelCount();
         }
 
-        public async UniTask LoadNextLevel()
+        public async UniTaskVoid LoadNextLevel()
         {
             isLoaded = false;
             savedData.LevelID++;
             if (savedData.LevelID >= levelCount)
                 savedData.LevelID = 0;
 
-            await LoadLevelAsync();
-            await SaveDataAsync();
+            await LoadLevelAsync(destroyCancellationToken);
+            await SaveDataAsync(destroyCancellationToken);
         }
 
-        public async UniTask RestartLevel()
+        public async UniTaskVoid RestartLevel()
         {
             ResetDate();
-            await SaveDataAsync();
+            await SaveDataAsync(destroyCancellationToken);
         }
 
-        public async UniTask UpdateLevel(byte[,] values)
+        public async UniTaskVoid UpdateLevel(byte[,] values)
         {
             savedData.ElementsGrid = values;
-            await SaveDataAsync();
+            await SaveDataAsync(destroyCancellationToken);
         }
 
-        private async UniTask LoadDataAsync()
+        private async UniTask LoadDataAsync(CancellationToken cancellationToken)
         {
-            savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName);
+            savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName, cancellationToken);
             if (savedData == null)
             {
                 savedData = new Data(0, null);
-                await LoadLevelAsync();
+                await LoadLevelAsync(cancellationToken);
             }
             else
             {
@@ -74,9 +75,9 @@ namespace Elements.Systems
             }
         }
 
-        private async UniTask LoadLevelAsync()
+        private async UniTask LoadLevelAsync(CancellationToken cancellationToken)
         {
-            levelData = await GetLevelDataAsync();
+            levelData = await GetLevelDataAsync(cancellationToken);
             if (levelData != null)
             {
                 ResetDate();
@@ -89,9 +90,8 @@ namespace Elements.Systems
             savedData.ElementsGrid = levelData.ElementsGrid;
         }
 
-        private async UniTask<LevelData> GetLevelDataAsync()
+        private async UniTask<LevelData> GetLevelDataAsync(CancellationToken cancellationToken)
         {
-            LevelData loadedLevelData;
             string fileName = string.Format(projectSettingsConfig.LevelFileNameFormat, savedData.LevelID);
             string fullPath = Path.Combine(Application.streamingAssetsPath, projectSettingsConfig.LevelsFolder, fileName);
 
@@ -101,28 +101,27 @@ namespace Elements.Systems
                 return null;
             }
 
+            LevelData loadedLevelData = null;
             try
             {
-                string jsonText = await File.ReadAllTextAsync(fullPath);
+                string jsonText = await File.ReadAllTextAsync(fullPath, cancellationToken);
                 loadedLevelData = JsonConvert.DeserializeObject<LevelData>(jsonText);
             }
-            catch (IOException ex)
+            catch (OperationCanceledException)
             {
-                Debug.LogError($"Ошибка чтения файла: {ex.Message}");
-                return null;
+                Debug.Log("Операция была отменена");
             }
-            catch (JsonException ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"Ошибка парсинга JSON: {ex.Message}");
-                return null;
+                Debug.LogError("Ошибка загрузки файла: " + ex.Message);
             }
 
             return loadedLevelData;
         }
 
-        private async UniTask SaveDataAsync()
+        private async UniTask SaveDataAsync(CancellationToken cancellationToken)
         {
-            await saveSystem.SaveAsync(projectSettingsConfig.SavesFileName, savedData);
+            await saveSystem.SaveAsync(projectSettingsConfig.SavesFileName, savedData, cancellationToken);
         }
 
         private int GetLevelCount()
