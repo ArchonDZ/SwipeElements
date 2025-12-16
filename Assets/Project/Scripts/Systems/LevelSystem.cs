@@ -9,7 +9,7 @@ using Zenject;
 
 namespace Elements.Systems
 {
-    public class LevelSystem : MonoBehaviour, IInitializable
+    public class LevelSystem : MonoBehaviour
     {
         [Inject] private ProjectSettingsConfig projectSettingsConfig;
         [Inject] private SaveSystem saveSystem;
@@ -30,6 +30,7 @@ namespace Elements.Systems
             }
         }
 
+        [Inject]
         public void Initialize()
         {
             LoadDataAsync().Forget();
