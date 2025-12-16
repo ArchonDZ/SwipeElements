@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6862261552339699093}
   - component: {fileID: 5164564452215036099}
   - component: {fileID: 6820952893622084317}
+  - component: {fileID: 3411104602443272381}
   m_Layer: 0
   m_Name: Element
   m_TagString: Untagged
@@ -128,3 +129,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Elements.Entities.Element
   spriteRenderer: {fileID: 6862261552339699093}
+--- !u!114 &3411104602443272381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4888964061731384408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b989fb45e97390c42ab775d1c978ca3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementAnimator
+  animator: {fileID: 5164564452215036099}
