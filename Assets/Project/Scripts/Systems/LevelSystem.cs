@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Elements.Configs;
 using Newtonsoft.Json;
+using R3;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,12 +16,12 @@ namespace Elements.Systems
         [Inject] private ProjectSettingsConfig projectSettingsConfig;
         [Inject] private SaveSystem saveSystem;
 
-        private bool isLoaded;
         private int levelCount;
         private Data savedData;
         private LevelData levelData;
+        private readonly ReactiveProperty<bool> isLoaded = new ReactiveProperty<bool>(false);
 
-        public bool IsLoaded => isLoaded;
+        public ReadOnlyReactiveProperty<bool> IsLoaded => isLoaded;
         public byte[,] ElementsGrig
         {
             get
@@ -38,9 +39,9 @@ namespace Elements.Systems
             levelCount = GetLevelCount();
         }
 
-        public async UniTaskVoid LoadNextLevel()
+        public async UniTask LoadNextLevel()
         {
-            isLoaded = false;
+            isLoaded.Value = false;
             savedData.LevelID++;
             if (savedData.LevelID >= levelCount)
                 savedData.LevelID = 0;
@@ -49,8 +50,9 @@ namespace Elements.Systems
             await SaveDataAsync(destroyCancellationToken);
         }
 
-        public async UniTaskVoid RestartLevel()
+        public async UniTask RestartLevel()
         {
+            isLoaded.Value = false;
             ResetDate();
             await SaveDataAsync(destroyCancellationToken);
         }
@@ -64,15 +66,8 @@ namespace Elements.Systems
         private async UniTask LoadDataAsync(CancellationToken cancellationToken)
         {
             savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName, cancellationToken);
-            if (savedData == null)
-            {
-                savedData = new Data(0, null);
-                await LoadLevelAsync(cancellationToken);
-            }
-            else
-            {
-                isLoaded = true;
-            }
+            savedData ??= new Data(0, null);
+            await LoadLevelAsync(cancellationToken);
         }
 
         private async UniTask LoadLevelAsync(CancellationToken cancellationToken)
@@ -81,13 +76,13 @@ namespace Elements.Systems
             if (levelData != null)
             {
                 ResetDate();
-                isLoaded = true;
             }
         }
 
         private void ResetDate()
         {
             savedData.ElementsGrid = levelData.ElementsGrid;
+            isLoaded.Value = true;
         }
 
         private async UniTask<LevelData> GetLevelDataAsync(CancellationToken cancellationToken)
