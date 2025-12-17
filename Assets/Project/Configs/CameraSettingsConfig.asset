@@ -16,3 +16,4 @@ MonoBehaviour:
   paddingRight: 0.25
   paddingTop: 2.5
   paddingBottom: 2.75
+  bottomOffsetPercent: 0.175

@@ -9,6 +9,7 @@ namespace Elements.Configs
         [SerializeField][Range(0, 1f)] private float paddingRight = 0.25f;
         [SerializeField][Range(0, 3f)] private float paddingTop = 2.5f;
         [SerializeField][Range(0, 3f)] private float paddingBottom = 2.75f;
+        [SerializeField][Range(0, 1f)] private float bottomOffsetPercent = 0.175f;
 
         public float PaddingLeft => paddingLeft;
         public float PaddingRight => paddingRight;
@@ -16,5 +17,6 @@ namespace Elements.Configs
         public float PaddingTop => paddingTop;
         public float PaddingBottom => paddingBottom;
         public float VerticalPadding => paddingTop + paddingBottom;
+        public float BottomOffsetPercent => bottomOffsetPercent;
     }
 }

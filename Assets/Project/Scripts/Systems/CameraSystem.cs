@@ -30,7 +30,9 @@ namespace Elements.Systems
 
             float horizontalGridCenter = gridSize.x / 2f;
             float horizontalOffset = cameraSettingsConfig.HorizontalPadding / 2f - cameraSettingsConfig.PaddingLeft;
-            float verticalOffsetCenter = mainCamera.orthographicSize - cameraSettingsConfig.PaddingBottom;
+
+            float cameraHeight = mainCamera.orthographicSize * 2;
+            float verticalOffsetCenter = mainCamera.orthographicSize - (cameraHeight * cameraSettingsConfig.BottomOffsetPercent);
 
             mainCamera.transform.position = new Vector3(
                 horizontalGridCenter + horizontalOffset,
