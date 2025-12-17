@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using Elements.Configs;
 using Elements.Entities.Background;
+using Elements.MemoryPools;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Zenject;
@@ -15,14 +15,10 @@ namespace Elements.Systems
         [SerializeField] private SpriteRenderer backgroundSpriteRenderer;
         [SerializeField] private List<BackgroundObject> backgroundObjectPrefabs = new();
 
-        [Inject] private DiContainer container;
         [Inject] private CameraSystem cameraSystem;
+        [Inject] private BackgroundObjectPool backgroundObjectPool;
 
-        private float leftBorderX;
-        private float rightBorderX;
-        private float topBorderX;
-        private float bottomBorderX;
-        private List<BackgroundObject> objectPool;
+        private BackgroundSettings backgroundSettings;
 
         public void SetupBackground()
         {
@@ -44,53 +40,42 @@ namespace Elements.Systems
                 );
 
             float halfWidth = cameraWidth / 2f;
-            leftBorderX = cameraSystem.MainCamera.transform.position.x - halfWidth;
-            rightBorderX = cameraSystem.MainCamera.transform.position.x + halfWidth;
-            topBorderX = (cameraSystem.MainCamera.orthographicSize * 2) - cameraSystem.CameraSettingsConfig.VerticalPadding;
-            bottomBorderX = 0;
-
-            CreateObjectPool();
-            SpawnLoopAsync(destroyCancellationToken).Forget();
-        }
-
-        private void CreateObjectPool()
-        {
-            if (backgroundObjectPrefabs.Count <= 0) return;
-
-            objectPool = new List<BackgroundObject>(backgroundConfig.MaxObjectCountOnScreen);
-            for (int i = 0; i < backgroundConfig.MaxObjectCountOnScreen; i++)
+            backgroundSettings = new BackgroundSettings()
             {
-                CreateObject();
-            }
-        }
+                LeftBorder = cameraSystem.MainCamera.transform.position.x - halfWidth,
+                RightBorder = cameraSystem.MainCamera.transform.position.x + halfWidth,
+                TopBorder = (cameraSystem.MainCamera.orthographicSize * 2) - cameraSystem.CameraSettingsConfig.VerticalPadding,
+                BottomBorder = 0,
+                Amplitude = backgroundConfig.ObjectSinAmplitude,
+                Frequency = backgroundConfig.ObjectSinFrequency
+            };
 
-        private BackgroundObject CreateObject()
-        {
-            BackgroundObject randomPrefab = backgroundObjectPrefabs[Random.Range(0, backgroundObjectPrefabs.Count)];
-            BackgroundObject backObject = container.InstantiatePrefabForComponent<BackgroundObject>(randomPrefab);
-            backObject.Initialize(leftBorderX, rightBorderX, topBorderX, bottomBorderX, backgroundConfig.ObjectSinFrequency, backgroundConfig.ObjectSinAmplitude);
-            backObject.gameObject.SetActive(false);
-            objectPool.Add(backObject);
-            return backObject;
+            if (backgroundObjectPrefabs.Count > 0)
+            {
+                backgroundObjectPool.Initialize(backgroundConfig.MaxObjectCountOnScreen, backgroundConfig.MaxObjectCountOnScreen, backgroundSettings);
+                SpawnLoopAsync(destroyCancellationToken).Forget();
+            }
         }
 
         private async UniTaskVoid SpawnLoopAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (objectPool.Where(x => x.gameObject.activeSelf).Count() < backgroundConfig.MaxObjectCountOnScreen)
+                if (backgroundObjectPool.GetActiveCount() < backgroundConfig.MaxObjectCountOnScreen)
                 {
-                    BackgroundObject backgroundObject = objectPool.Find(x => !x.gameObject.activeSelf);
-                    if (backgroundObject == null)
-                        backgroundObject = CreateObject();
-
+                    BackgroundObject randomPrefab = backgroundObjectPrefabs[Random.Range(0, backgroundObjectPrefabs.Count)];
                     float direction = Random.Range(0, 2) == 1 ? 1 : -1;
                     float speed = Random.Range(backgroundConfig.MinObjectSpeed, backgroundConfig.MaxObjectSpeed);
-                    backgroundObject.Activate(direction, speed);
+                    backgroundObjectPool.Spawn(randomPrefab, direction, speed);
                 }
 
                 await UniTask.WaitForSeconds(backgroundConfig.SpawnInterval, cancellationToken: cancellationToken);
             }
         }
+    }
+
+    public struct BackgroundSettings
+    {
+        public float LeftBorder, RightBorder, TopBorder, BottomBorder, Frequency, Amplitude;
     }
 }

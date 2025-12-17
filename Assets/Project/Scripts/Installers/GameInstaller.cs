@@ -1,4 +1,5 @@
 using Elements.Configs;
+using Elements.MemoryPools;
 using Elements.Systems;
 using UnityEngine;
 using Zenject;
@@ -18,6 +19,7 @@ namespace Elements.Installers
             Container.BindInterfacesAndSelfTo<CameraSystem>().FromInstance(cameraSystem).AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<GridSystem>().FromInstance(gridSystem).AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<BackgroudSystem>().FromInstance(backgroudSystem).AsSingle().NonLazy();
+            Container.Bind<BackgroundObjectPool>().AsSingle().NonLazy();
         }
     }
 }

@@ -1,59 +1,58 @@
 using Cysharp.Threading.Tasks;
+using Elements.Systems;
 using System.Threading;
 using UnityEngine;
+using Zenject;
 
 namespace Elements.Entities.Background
 {
-    public class BackgroundObject : MonoBehaviour
+    public class BackgroundObject : MonoBehaviour, IPoolable<float, float, IMemoryPool>
     {
+        public class Pool : MonoPoolableMemoryPool<float, float, IMemoryPool, BackgroundObject> { }
+
         [SerializeField] private SpriteRenderer spriteRenderer;
 
-        private float leftBorder;
-        private float rightBorder;
-        private float topBorder;
-        private float bottomBorder;
-
-        private float frequency;
-        private float amplitude;
+        private IMemoryPool pool;
+        private BackgroundSettings settings;
 
         private float halfSpriteX;
         private float spriteY;
-
         private float moveDirection;
         private float moveSpeed;
-
         private float startPositionY;
 
         private CancellationTokenSource cts;
 
-        public void Initialize(float leftBorderX, float rightBorderX, float topBorderY, float bottomBorderY, float frequency, float amplitude)
+        [Inject]
+        public void Construct(BackgroundSettings backgroundSettings)
         {
-            leftBorder = leftBorderX;
-            rightBorder = rightBorderX;
-            topBorder = topBorderY;
-            bottomBorder = bottomBorderY;
-
-            this.frequency = frequency;
-            this.amplitude = amplitude;
-
+            settings = backgroundSettings;
             halfSpriteX = spriteRenderer.bounds.extents.x;
             spriteY = spriteRenderer.bounds.size.y;
         }
 
-        public void Activate(float direction, float speed)
+        public void OnSpawned(float direction, float speed, IMemoryPool pool)
         {
+            this.pool = pool;
             moveDirection = direction;
             moveSpeed = speed;
+            gameObject.SetActive(true);
 
             RecalculateStartPosition();
             CheckCancellationTokenSource();
             UpdateAsync(cts.Token).Forget();
         }
 
+        public void OnDespawned()
+        {
+            gameObject.SetActive(false);
+            StopUniTask();
+        }
+
         private void RecalculateStartPosition()
         {
-            float positionX = moveDirection > 0 ? leftBorder - halfSpriteX : rightBorder + halfSpriteX;
-            float positionY = Random.Range(bottomBorder + spriteY, topBorder - spriteY);
+            float positionX = moveDirection > 0 ? settings.LeftBorder - halfSpriteX : settings.RightBorder + halfSpriteX;
+            float positionY = Random.Range(settings.BottomBorder + spriteY, settings.TopBorder - spriteY);
 
             startPositionY = positionY;
             transform.position = new Vector3(positionX, positionY, transform.position.z);
@@ -66,7 +65,7 @@ namespace Elements.Entities.Background
             {
                 transform.position = new Vector3(
                     transform.position.x + (moveDirection * moveSpeed * Time.deltaTime),
-                    startPositionY + Mathf.Sin(Time.time * frequency * moveSpeed) * amplitude,
+                    startPositionY + Mathf.Sin(Time.time * settings.Frequency * moveSpeed) * settings.Amplitude,
                     transform.position.z
                 );
 
@@ -78,11 +77,10 @@ namespace Elements.Entities.Background
 
         private void CheckOutOfBounds()
         {
-            if (moveDirection > 0 && transform.position.x > rightBorder + halfSpriteX ||
-                moveDirection < 0 && transform.position.x < leftBorder - halfSpriteX)
+            if (moveDirection > 0 && transform.position.x > settings.RightBorder + halfSpriteX ||
+                moveDirection < 0 && transform.position.x < settings.LeftBorder - halfSpriteX)
             {
-                gameObject.SetActive(false);
-                StopUniTask();
+                pool?.Despawn(this);
             }
         }
 
