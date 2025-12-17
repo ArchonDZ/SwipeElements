@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Elements.Configs;
 using Elements.Entities;
 using Elements.MemoryPools;
@@ -18,6 +19,7 @@ namespace Elements.Systems
         private InputSystem inputSystem;
         private LevelSystem levelSystem;
 
+        private Sequence normalizeSequence;
         private byte[,] elementValues;
         private Element[,] elements;
         int columns;
@@ -46,6 +48,7 @@ namespace Elements.Systems
                 inputSystem.OnClickDownEvent -= OnClickDown;
                 inputSystem.OnClickUpEvent -= OnClickUp;
             }
+            normalizeSequence?.Kill();
         }
 
         private void OnClickDown(Vector2 vector2)
@@ -72,6 +75,7 @@ namespace Elements.Systems
 
         private void ClearGrid()
         {
+            normalizeSequence?.Kill();
             for (int i = 0; i < columns; i++)
             {
                 for (int j = 0; j < rows; j++)
@@ -101,7 +105,7 @@ namespace Elements.Systems
                     byte cell = elementValues[i, j];
                     if (cell != 0 && elementDatabaseConfig.TryGetElementByType((ElementType)cell, out ElementContext context))
                     {
-                        elements[i, j] = elementPool.Spawn(context.Prefab, new Vector2(i, j), order);
+                        elements[i, j] = elementPool.Spawn(context.Prefab, new Vector2(i, j), i * rows + j);
                         order++;
                     }
                 }
@@ -113,6 +117,7 @@ namespace Elements.Systems
             if (!AreExists(element1Coord.x, element1Coord.y, element2Coord.x, element2Coord.y)) return false;
             if (!CanSwap(element1Coord.x, element1Coord.y, element2Coord.x, element2Coord.y)) return false;
 
+            normalizeSequence = DOTween.Sequence();
             Swap(element1Coord.x, element1Coord.y, element2Coord.x, element2Coord.y);
             NormalizeGrid();
             CheckCompleteGrid();
@@ -154,6 +159,8 @@ namespace Elements.Systems
 
         private void Swap(int col1, int row1, int col2, int row2)
         {
+            Sequence swapSequence = DOTween.Sequence();
+
             byte tempValue = elementValues[col1, row1];
             elementValues[col1, row1] = elementValues[col2, row2];
             elementValues[col2, row2] = tempValue;
@@ -161,6 +168,18 @@ namespace Elements.Systems
             Element tempElement = elements[col1, row1];
             elements[col1, row1] = elements[col2, row2];
             elements[col2, row2] = tempElement;
+
+            if (elements[col1, row1] != null)
+            {
+                swapSequence.Join(elements[col1, row1].MoveTo(new Vector2(col1, row1), GetOrder(col1, row1)));
+            }
+
+            if (elements[col2, row2] != null)
+            {
+                swapSequence.Join(elements[col2, row2].MoveTo(new Vector2(col2, row2), GetOrder(col1, row1)));
+            }
+
+            normalizeSequence.Append(swapSequence);
         }
 
         private void NormalizeGrid()
@@ -175,6 +194,8 @@ namespace Elements.Systems
 
         private void DropElements()
         {
+            Sequence dropSequence = DOTween.Sequence();
+
             for (int i = 0; i < columns; i++)
             {
                 int emptySpot = -1;
@@ -193,15 +214,25 @@ namespace Elements.Systems
                         {
                             elementValues[i, emptySpot] = elementValues[i, j];
                             elementValues[i, j] = 0;
+
+                            elements[i, emptySpot] = elements[i, j];
+                            elements[i, j] = null;
+
+                            dropSequence.Join(elements[i, emptySpot].MoveTo(new Vector2(i, emptySpot), GetOrder(i, emptySpot)));
+
                             emptySpot++;
                         }
                     }
                 }
             }
+
+            normalizeSequence.Append(dropSequence);
         }
 
         private bool TryMatchElements()
         {
+            Sequence matchSequence = DOTween.Sequence();
+
             bool foundMatch = false;
             bool[,] toRemove = new bool[columns, rows];
 
@@ -235,12 +266,21 @@ namespace Elements.Systems
             {
                 for (int j = 0; j < rows; j++)
                 {
-                    if (toRemove[i, j]) elementValues[i, j] = 0;
+                    if (toRemove[i, j])
+                    {
+                        elementValues[i, j] = 0;
+                        matchSequence.JoinCallback(elements[i, j].Destroy);
+                        elements[i, j] = null;
+                    }
                 }
             }
 
+            matchSequence.AppendInterval(1f);
+            normalizeSequence.Append(matchSequence);
             return foundMatch;
         }
+
+        private int GetOrder(int colIndex, int rowIndex) => colIndex * rows + rowIndex;
 
         private void CheckCompleteGrid()
         {
@@ -265,7 +305,7 @@ namespace Elements.Systems
             }
             else
             {
-                levelSystem.LoadNextLevel().Forget();
+                normalizeSequence.OnComplete(() => levelSystem.LoadNextLevel().Forget());
             }
         }
     }

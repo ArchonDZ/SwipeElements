@@ -40,7 +40,7 @@ namespace Elements.UI
         {
             restartButton.interactable = false;
             await levelSystem.RestartLevel();
-            restartButton.interactable = false;
+            restartButton.interactable = true;
         }
     }
 }

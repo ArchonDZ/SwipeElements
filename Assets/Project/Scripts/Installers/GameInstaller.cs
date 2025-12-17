@@ -10,6 +10,7 @@ namespace Elements.Installers
     {
         [SerializeField] private ElementDatabaseConfig elementDatabaseConfig;
         [SerializeField] private GridSettingConfig gridSettingConfig;
+        [SerializeField] private ElementConfig elementConfig;
         [SerializeField] private CameraSystem cameraSystem;
         [SerializeField] private GridSystem gridSystem;
         [SerializeField] private BackgroudSystem backgroudSystem;
@@ -18,6 +19,7 @@ namespace Elements.Installers
         {
             Container.Bind<ElementDatabaseConfig>().FromInstance(elementDatabaseConfig).AsSingle().NonLazy();
             Container.Bind<GridSettingConfig>().FromInstance(gridSettingConfig).AsSingle().NonLazy();
+            Container.Bind<ElementConfig>().FromInstance(elementConfig).AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<CameraSystem>().FromInstance(cameraSystem).AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<GridSystem>().FromInstance(gridSystem).AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<BackgroudSystem>().FromInstance(backgroudSystem).AsSingle().NonLazy();

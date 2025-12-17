@@ -53,7 +53,7 @@ namespace Elements.Systems
         public async UniTask RestartLevel()
         {
             isLoaded.Value = false;
-            ResetDate();
+            await LoadLevelAsync(destroyCancellationToken);
             await SaveDataAsync(destroyCancellationToken);
         }
 
@@ -66,8 +66,15 @@ namespace Elements.Systems
         private async UniTask LoadDataAsync(CancellationToken cancellationToken)
         {
             savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName, cancellationToken);
-            savedData ??= new Data(0, null);
-            await LoadLevelAsync(cancellationToken);
+            if (savedData == null)
+            {
+                savedData = new Data(0, null);
+                await LoadLevelAsync(cancellationToken);
+            }
+            else
+            {
+                isLoaded.Value = true;
+            }
         }
 
         private async UniTask LoadLevelAsync(CancellationToken cancellationToken)
@@ -75,14 +82,9 @@ namespace Elements.Systems
             levelData = await GetLevelDataAsync(cancellationToken);
             if (levelData != null)
             {
-                ResetDate();
+                savedData.ElementsGrid = levelData.ElementsGrid;
+                isLoaded.Value = true;
             }
-        }
-
-        private void ResetDate()
-        {
-            savedData.ElementsGrid = levelData.ElementsGrid;
-            isLoaded.Value = true;
         }
 
         private async UniTask<LevelData> GetLevelDataAsync(CancellationToken cancellationToken)

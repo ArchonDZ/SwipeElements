@@ -96,6 +96,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameInstaller
   elementDatabaseConfig: {fileID: 11400000, guid: 3fe6f5f5c84e84a46b215e906332286c, type: 2}
   gridSettingConfig: {fileID: 11400000, guid: 317b922d99b405b4fafd5e340b435e7d, type: 2}
+  elementConfig: {fileID: 11400000, guid: 404994ddf506f77498b50bd52a6cb410, type: 2}
   cameraSystem: {fileID: 1339800591171517142}
   gridSystem: {fileID: 6190410021199370285}
   backgroudSystem: {fileID: 7361331527967279595}

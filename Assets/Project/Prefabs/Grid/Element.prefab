@@ -129,6 +129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Elements.Entities.Element
   spriteRenderer: {fileID: 6862261552339699093}
+  animator: {fileID: 3411104602443272381}
 --- !u!114 &3411104602443272381
 MonoBehaviour:
   m_ObjectHideFlags: 0
