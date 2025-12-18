@@ -96,7 +96,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameInstaller
   elementDatabaseConfig: {fileID: 11400000, guid: 3fe6f5f5c84e84a46b215e906332286c, type: 2}
   gridSettingConfig: {fileID: 11400000, guid: 317b922d99b405b4fafd5e340b435e7d, type: 2}
-  elementConfig: {fileID: 11400000, guid: 404994ddf506f77498b50bd52a6cb410, type: 2}
   cameraSystem: {fileID: 1339800591171517142}
   gridSystem: {fileID: 6190410021199370285}
   backgroudSystem: {fileID: 7361331527967279595}
@@ -496,9 +495,61 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2511115214725052597}
     m_Modifications:
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448374878582414068, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4066097479502134096, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
       propertyPath: m_Name
       value: GameControlCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4994441828976322795, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5141087524743853935, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8560368705663898512, guid: 874d9c2a4b2f21247bd162b7d6f37c82, type: 3}
       propertyPath: m_Pivot.x

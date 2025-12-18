@@ -21,6 +21,7 @@ namespace Elements.Systems
         private LevelData levelData;
         private readonly ReactiveProperty<bool> isLoaded = new ReactiveProperty<bool>(false);
 
+        public ushort CurrentLevelIndex => savedData?.LevelID ?? 0;
         public ReadOnlyReactiveProperty<bool> IsLoaded => isLoaded;
         public byte[,] ElementsGrig
         {
