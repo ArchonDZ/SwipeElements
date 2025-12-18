@@ -76,14 +76,7 @@ namespace Elements.Systems
         private void ClearGrid()
         {
             normalizeSequence?.Kill();
-            for (int i = 0; i < columns; i++)
-            {
-                for (int j = 0; j < rows; j++)
-                {
-                    if (elements[i, j] != null)
-                        elements[i, j].ReturnToPool();
-                }
-            }
+            elementPool.DespawnAll();
         }
 
         private void ResetGrid()

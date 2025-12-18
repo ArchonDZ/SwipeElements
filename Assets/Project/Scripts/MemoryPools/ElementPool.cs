@@ -1,5 +1,6 @@
 using Elements.Entities;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Zenject;
 
@@ -12,6 +13,7 @@ namespace Elements.MemoryPools
 
         private readonly DiContainer _container;
         private readonly Dictionary<int, Element.Pool> _pools = new();
+        private readonly List<Element> _currentlyActive = new();
 
         public ElementPool(DiContainer container)
         {
@@ -43,7 +45,26 @@ namespace Elements.MemoryPools
                 _pools.Add(prefabId, pool);
             }
 
-            return pool.Spawn(position, order, pool);
+            Element element = pool.Spawn(position, order, pool);
+            element.OnDespawnedEvent += Element_OnDespawnedEvent;
+            _currentlyActive.Add(element);
+
+            return element;
+        }
+
+        public void DespawnAll()
+        {
+            var list = _currentlyActive.ToList();
+            foreach (var obj in list)
+            {
+                obj.ReturnToPool();
+            }
+        }
+
+        private void Element_OnDespawnedEvent(Element element)
+        {
+            element.OnDespawnedEvent -= Element_OnDespawnedEvent;
+            _currentlyActive.Remove(element);
         }
     }
 }

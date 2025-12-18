@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Elements.Configs;
+using System;
+using System.Threading;
 using UnityEngine;
 using Zenject;
 
@@ -10,6 +12,8 @@ namespace Elements.Entities
     {
         public class Pool : MonoPoolableMemoryPool<Vector2, int, IMemoryPool, Element> { }
 
+        public event Action<Element> OnDespawnedEvent;
+
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private ElementAnimator animator;
 
@@ -18,6 +22,7 @@ namespace Elements.Entities
         private IMemoryPool pool;
         private bool isAvailable;
         private Sequence sequence;
+        private CancellationTokenSource cts;
 
         public bool IsAvailable => isAvailable;
         public int SortingOrder => spriteRenderer.sortingOrder;
@@ -38,6 +43,8 @@ namespace Elements.Entities
         {
             isAvailable = false;
             gameObject.SetActive(false);
+            StopUniTask();
+            OnDespawnedEvent?.Invoke(this);
         }
 
         public void ReturnToPool()
@@ -60,7 +67,9 @@ namespace Elements.Entities
 
         public void Destroy()
         {
-            DestroyAsync().Forget();
+            if (!isAvailable) return;
+            CheckCancellationTokenSource();
+            DestroyAsync(cts.Token).Forget();
         }
 
         private void SetSortingOrder(int value)
@@ -68,10 +77,18 @@ namespace Elements.Entities
             spriteRenderer.sortingOrder = value;
         }
 
-        private async UniTaskVoid DestroyAsync()
+        private async UniTaskVoid DestroyAsync(CancellationToken token)
         {
             isAvailable = false;
-            await animator.PlayDestroyAsync();
+            try
+            {
+                await animator.PlayDestroyAsync(token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
             ReturnToPool();
         }
 
@@ -80,8 +97,25 @@ namespace Elements.Entities
             isAvailable = true;
         }
 
+        private void CheckCancellationTokenSource()
+        {
+            StopUniTask();
+            cts = new CancellationTokenSource();
+        }
+
+        private void StopUniTask()
+        {
+            if (cts != null)
+            {
+                cts.Cancel();
+                cts.Dispose();
+                cts = null;
+            }
+        }
+
         private void OnDestroy()
         {
+            StopUniTask();
             sequence?.Kill();
         }
     }
