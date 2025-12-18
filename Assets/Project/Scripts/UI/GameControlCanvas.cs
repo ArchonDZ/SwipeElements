@@ -21,13 +21,22 @@ namespace Elements.UI
         public void Initialize(LevelSystem levelSystem)
         {
             this.levelSystem = levelSystem;
-            levelSystem.IsLoaded.Subscribe(_ => UpdateText()).AddTo(this);
+            levelSystem.IsLoaded.Subscribe(Loading).AddTo(this);
         }
 
         private void Awake()
         {
             nextLevelButton.onClick.AddListener(LoadNextLevel);
             restartButton.onClick.AddListener(RestartLevel);
+        }
+
+        private void Loading(bool value)
+        {
+            nextLevelButton.interactable = value;
+            restartButton.interactable = value;
+
+            if (value)
+                UpdateText();
         }
 
         private void UpdateText()
@@ -37,26 +46,12 @@ namespace Elements.UI
 
         private void LoadNextLevel()
         {
-            LoadNextLevelAsync().Forget();
-        }
-
-        private async UniTaskVoid LoadNextLevelAsync()
-        {
-            nextLevelButton.interactable = false;
-            await levelSystem.LoadNextLevel();
-            nextLevelButton.interactable = true;
+            levelSystem.LoadNextLevel().Forget();
         }
 
         private void RestartLevel()
         {
-            RestartLevelAsync().Forget();
-        }
-
-        private async UniTaskVoid RestartLevelAsync()
-        {
-            restartButton.interactable = false;
-            await levelSystem.RestartLevel();
-            restartButton.interactable = true;
+            levelSystem.RestartLevel().Forget();
         }
     }
 }
