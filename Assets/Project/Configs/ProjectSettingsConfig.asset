@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: ProjectSettingsConfig
   m_EditorClassIdentifier: Assembly-CSharp::Elements.Configs.ProjectSettingsConfig
   savesFileName: save.dat
+  levelsFolder: Levels
   levelFileNameFormat: level_{0}.json
+  levelCount: 3

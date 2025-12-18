@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 using Zenject;
 
 namespace Elements.Systems
@@ -16,7 +17,6 @@ namespace Elements.Systems
         [Inject] private ProjectSettingsConfig projectSettingsConfig;
         [Inject] private SaveSystem saveSystem;
 
-        private int levelCount;
         private bool isLoading;
         private Data savedData;
         private LevelData levelData;
@@ -38,7 +38,6 @@ namespace Elements.Systems
         public void Initialize()
         {
             LoadDataAsync().Forget();
-            levelCount = GetLevelCount();
         }
 
         public async UniTaskVoid LoadNextLevel()
@@ -67,7 +66,7 @@ namespace Elements.Systems
         private void IncrementLevelIndex()
         {
             savedData.LevelID++;
-            if (savedData.LevelID >= levelCount)
+            if (savedData.LevelID >= projectSettingsConfig.LevelCount)
                 savedData.LevelID = 0;
         }
 
@@ -110,17 +109,17 @@ namespace Elements.Systems
             string fileName = string.Format(projectSettingsConfig.LevelFileNameFormat, savedData.LevelID);
             string fullPath = Path.Combine(Application.streamingAssetsPath, projectSettingsConfig.LevelsFolder, fileName);
 
-            if (!File.Exists(fullPath))
-            {
-                Debug.LogError($"Файл уровня не найден: {fullPath}");
-                return null;
-            }
-
             LevelData loadedLevelData = null;
             try
             {
-                string jsonText = await File.ReadAllTextAsync(fullPath, cancellationToken);
-                loadedLevelData = JsonConvert.DeserializeObject<LevelData>(jsonText);
+                using UnityWebRequest www = UnityWebRequest.Get(fullPath);
+                await www.SendWebRequest().WithCancellation(cancellationToken);
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    string jsonText = www.downloadHandler.text;
+                    loadedLevelData = JsonConvert.DeserializeObject<LevelData>(jsonText);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -137,12 +136,6 @@ namespace Elements.Systems
         private async UniTask SaveDataAsync(CancellationToken cancellationToken)
         {
             await saveSystem.SaveAsync(projectSettingsConfig.SavesFileName, savedData, cancellationToken);
-        }
-
-        private int GetLevelCount()
-        {
-            string fullPath = Path.Combine(Application.streamingAssetsPath, projectSettingsConfig.LevelsFolder);
-            return Directory.EnumerateFiles(fullPath, "*.json").Count();
         }
     }
 
