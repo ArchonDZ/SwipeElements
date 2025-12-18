@@ -176,7 +176,7 @@ namespace Elements.Systems
 
             if (elements[col2, row2] != null)
             {
-                swapSequence.Join(elements[col2, row2].MoveTo(new Vector2(col2, row2), GetOrder(col1, row1)));
+                swapSequence.Join(elements[col2, row2].MoveTo(new Vector2(col2, row2), GetOrder(col2, row2)));
             }
 
             normalizeSequence.Append(swapSequence);
