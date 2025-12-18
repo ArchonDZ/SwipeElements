@@ -13,6 +13,8 @@ namespace Elements.Installers
 
         public override void InstallBindings()
         {
+            Application.targetFrameRate = 60;
+
             Container.Bind<ProjectSettingsConfig>().FromInstance(projectSettingsConfig).AsSingle().NonLazy();
             Container.Bind<SaveSystem>().AsSingle().NonLazy();
             Container.BindInterfacesAndSelfTo<InputSystem>().FromInstance(inputSystem).AsSingle().NonLazy();
