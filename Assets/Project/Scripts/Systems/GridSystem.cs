@@ -4,6 +4,7 @@ using Elements.Configs;
 using Elements.Entities;
 using Elements.MemoryPools;
 using R3;
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -19,7 +20,6 @@ namespace Elements.Systems
         private InputSystem inputSystem;
         private LevelSystem levelSystem;
 
-        private Sequence normalizeSequence;
         private byte[,] elementValues;
         private Element[,] elements;
         int columns;
@@ -27,6 +27,9 @@ namespace Elements.Systems
 
         private Vector2Int element1Coord;
         private Vector2Int element2Coord;
+
+        private List<Tween> tweens = new();
+        private Sequence normalizeSequence;
 
         [Inject]
         public void Initialize(InputSystem inputSystem, GridSettingConfig gridSettingConfig, LevelSystem levelSystem)
@@ -48,7 +51,7 @@ namespace Elements.Systems
                 inputSystem.OnClickDownEvent -= OnClickDown;
                 inputSystem.OnClickUpEvent -= OnClickUp;
             }
-            normalizeSequence?.Kill();
+            ClearSequences();
         }
 
         private void OnClickDown(Vector2 vector2)
@@ -75,7 +78,7 @@ namespace Elements.Systems
 
         private void ClearGrid()
         {
-            normalizeSequence?.Kill();
+            ClearSequences();
             elementPool.DespawnAll();
         }
 
@@ -111,6 +114,8 @@ namespace Elements.Systems
             if (!CanSwap(element1Coord.x, element1Coord.y, element2Coord.x, element2Coord.y)) return false;
 
             normalizeSequence = DOTween.Sequence();
+            tweens.Add(normalizeSequence);
+
             Swap(element1Coord.x, element1Coord.y, element2Coord.x, element2Coord.y);
             NormalizeGrid();
             CheckCompleteGrid();
@@ -298,8 +303,18 @@ namespace Elements.Systems
             }
             else
             {
-                normalizeSequence.OnComplete(() => levelSystem.LoadNextLevel().Forget());
+                normalizeSequence.OnComplete(() =>
+                {
+                    levelSystem.LoadNextLevel().Forget();
+                    tweens.Remove(normalizeSequence);
+                });
             }
+        }
+
+        private void ClearSequences()
+        {
+            tweens.ForEach(x => x?.Kill());
+            tweens.Clear();
         }
     }
 }
