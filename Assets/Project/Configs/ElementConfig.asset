@@ -12,4 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8c7c511a5b03e143a5bf45bd3a84c09, type: 3}
   m_Name: ElementConfig
   m_EditorClassIdentifier: Assembly-CSharp::Elements.Configs.ElementConfig
-  swapDuration: 0.3
+  swapDuration: 0.2
+  swapEase: 1
+  dropDuration: 0.4
+  dropEase: 17
+  destroyDuration: 1
+  idleStateName: Idle
+  destroyStateName: Destroy

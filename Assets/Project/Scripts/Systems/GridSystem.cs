@@ -169,12 +169,12 @@ namespace Elements.Systems
 
             if (elements[col1, row1] != null)
             {
-                swapSequence.Join(elements[col1, row1].MoveTo(new Vector2(col1, row1), GetOrder(col1, row1)));
+                swapSequence.Join(elements[col1, row1].Move(new Vector2(col1, row1), GetOrder(col1, row1)));
             }
 
             if (elements[col2, row2] != null)
             {
-                swapSequence.Join(elements[col2, row2].MoveTo(new Vector2(col2, row2), GetOrder(col2, row2)));
+                swapSequence.Join(elements[col2, row2].Move(new Vector2(col2, row2), GetOrder(col2, row2)));
             }
 
             normalizeSequence.Append(swapSequence);
@@ -216,7 +216,7 @@ namespace Elements.Systems
                             elements[i, emptySpot] = elements[i, j];
                             elements[i, j] = null;
 
-                            dropSequence.Join(elements[i, emptySpot].MoveTo(new Vector2(i, emptySpot), GetOrder(i, emptySpot)));
+                            dropSequence.Join(elements[i, emptySpot].Drop(new Vector2(i, emptySpot), GetOrder(i, emptySpot)));
 
                             emptySpot++;
                         }
@@ -267,13 +267,12 @@ namespace Elements.Systems
                     if (toRemove[i, j])
                     {
                         elementValues[i, j] = 0;
-                        matchSequence.JoinCallback(elements[i, j].Destroy);
+                        matchSequence.Join(elements[i, j].Destroy());
                         elements[i, j] = null;
                     }
                 }
             }
 
-            matchSequence.AppendInterval(1f);
             normalizeSequence.Append(matchSequence);
             return foundMatch;
         }

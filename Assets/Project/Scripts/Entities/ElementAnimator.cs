@@ -9,10 +9,10 @@ public class ElementAnimator : MonoBehaviour
     private int idleStateHash;
     private int destroyStateHash;
 
-    private void Awake()
+    public void InitializeStates(string idleStateName, string destroyStateName)
     {
-        idleStateHash = Animator.StringToHash("Idle");
-        destroyStateHash = Animator.StringToHash("Destroy");
+        idleStateHash = Animator.StringToHash(idleStateName);
+        destroyStateHash = Animator.StringToHash(destroyStateName);
     }
 
     public void PlayIdle()

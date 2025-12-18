@@ -14,18 +14,23 @@ namespace Elements.Entities
 
         public event Action<Element> OnDespawnedEvent;
 
+        [SerializeField] private ElementConfig config;
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private ElementAnimator animator;
 
-        [Inject] private ElementConfig config;
-
         private IMemoryPool pool;
         private bool isAvailable;
-        private Sequence sequence;
+        private Sequence moveSequence;
+        private Sequence destroySequence;
         private CancellationTokenSource cts;
 
         public bool IsAvailable => isAvailable;
         public int SortingOrder => spriteRenderer.sortingOrder;
+
+        private void Awake()
+        {
+            animator.InitializeStates(config.IdleStateName, config.DestroyStateName);
+        }
 
         public void OnSpawned(Vector2 position, int order, IMemoryPool pool)
         {
@@ -52,24 +57,39 @@ namespace Elements.Entities
             pool?.Despawn(this);
         }
 
-        public Sequence MoveTo(Vector2 position, int order)
+        public Sequence Move(Vector2 position, int order)
+        {
+            return MoveTo(position, order, config.SwapDuration).SetEase(config.SwapEase);
+        }
+
+        public Sequence Drop(Vector2 position, int order)
+        {
+            return MoveTo(position, order, config.DropDuration).SetEase(config.DropEase);
+        }
+
+        private Sequence MoveTo(Vector2 position, int order, float duration)
         {
             isAvailable = false;
 
-            sequence?.Kill();
-            sequence = DOTween.Sequence()
+            moveSequence?.Kill();
+            moveSequence = DOTween.Sequence()
                 .AppendCallback(() => SetSortingOrder(order))
-                .Append(transform.DOMove(position, config.SwapDuration))
+                .Append(transform.DOMove(position, duration))
                 .OnComplete(OnCompleteMovement);
 
-            return sequence;
+            return moveSequence;
         }
 
-        public void Destroy()
+        public Sequence Destroy()
         {
-            if (!isAvailable) return;
-            CheckCancellationTokenSource();
-            DestroyAsync(cts.Token).Forget();
+            isAvailable = false;
+
+            destroySequence?.Kill();
+            destroySequence = DOTween.Sequence()
+                .AppendCallback(InvokeDestroy)
+                .AppendInterval(config.DestroyDuration);
+
+            return destroySequence;
         }
 
         private void SetSortingOrder(int value)
@@ -77,9 +97,25 @@ namespace Elements.Entities
             spriteRenderer.sortingOrder = value;
         }
 
+        private void OnCompleteMovement()
+        {
+            isAvailable = true;
+        }
+
+        private void InvokeDestroy()
+        {
+            CheckCancellationTokenSource();
+            DestroyAsync(cts.Token).Forget();
+        }
+
+        private void CheckCancellationTokenSource()
+        {
+            StopUniTask();
+            cts = new CancellationTokenSource();
+        }
+
         private async UniTaskVoid DestroyAsync(CancellationToken token)
         {
-            isAvailable = false;
             try
             {
                 await animator.PlayDestroyAsync(token);
@@ -90,17 +126,6 @@ namespace Elements.Entities
             }
 
             ReturnToPool();
-        }
-
-        private void OnCompleteMovement()
-        {
-            isAvailable = true;
-        }
-
-        private void CheckCancellationTokenSource()
-        {
-            StopUniTask();
-            cts = new CancellationTokenSource();
         }
 
         private void StopUniTask()
@@ -116,7 +141,8 @@ namespace Elements.Entities
         private void OnDestroy()
         {
             StopUniTask();
-            sequence?.Kill();
+            moveSequence?.Kill();
+            destroySequence?.Kill();
         }
     }
 }

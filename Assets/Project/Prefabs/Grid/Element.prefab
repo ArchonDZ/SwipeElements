@@ -128,6 +128,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcca4acb72d9fa147b9708f3c62b41de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Elements.Entities.Element
+  config: {fileID: 11400000, guid: 404994ddf506f77498b50bd52a6cb410, type: 2}
   spriteRenderer: {fileID: 6862261552339699093}
   animator: {fileID: 3411104602443272381}
 --- !u!114 &3411104602443272381
