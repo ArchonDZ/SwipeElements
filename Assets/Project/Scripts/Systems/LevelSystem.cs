@@ -17,6 +17,7 @@ namespace Elements.Systems
         [Inject] private SaveSystem saveSystem;
 
         private int levelCount;
+        private bool isLoading;
         private Data savedData;
         private LevelData levelData;
         private readonly ReactiveProperty<bool> isLoaded = new ReactiveProperty<bool>(false);
@@ -36,26 +37,25 @@ namespace Elements.Systems
         [Inject]
         public void Initialize()
         {
-            LoadDataAsync(destroyCancellationToken).Forget();
+            LoadDataAsync().Forget();
             levelCount = GetLevelCount();
         }
 
-        public async UniTask LoadNextLevel()
+        public async UniTaskVoid LoadNextLevel()
         {
-            isLoaded.Value = false;
-            savedData.LevelID++;
-            if (savedData.LevelID >= levelCount)
-                savedData.LevelID = 0;
-
-            await LoadLevelAsync(destroyCancellationToken);
-            await SaveDataAsync(destroyCancellationToken);
+            IncrementLevelIndex();
+            await LoadLevelNotifyAsync(true, true);
         }
 
-        public async UniTask RestartLevel()
+        public async UniTaskVoid QuietLoadNextLevel()
         {
-            isLoaded.Value = false;
-            await LoadLevelAsync(destroyCancellationToken);
-            await SaveDataAsync(destroyCancellationToken);
+            IncrementLevelIndex();
+            await LoadLevelNotifyAsync(false, true);
+        }
+
+        public async UniTaskVoid RestartLevel()
+        {
+            await LoadLevelNotifyAsync(true, false);
         }
 
         public async UniTaskVoid UpdateLevel(byte[,] values)
@@ -64,28 +64,45 @@ namespace Elements.Systems
             await SaveDataAsync(destroyCancellationToken);
         }
 
-        private async UniTask LoadDataAsync(CancellationToken cancellationToken)
+        private void IncrementLevelIndex()
         {
-            savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName, cancellationToken);
+            savedData.LevelID++;
+            if (savedData.LevelID >= levelCount)
+                savedData.LevelID = 0;
+        }
+
+        private async UniTask LoadDataAsync()
+        {
+            savedData = await saveSystem.LoadAsync(projectSettingsConfig.SavesFileName, destroyCancellationToken);
             if (savedData == null)
             {
                 savedData = new Data(0, null);
-                await LoadLevelAsync(cancellationToken);
+                await LoadLevelDataAsync(true, destroyCancellationToken);
             }
-            else
-            {
-                isLoaded.Value = true;
-            }
+
+            isLoaded.Value = true;
         }
 
-        private async UniTask LoadLevelAsync(CancellationToken cancellationToken)
+        private async UniTask LoadLevelNotifyAsync(bool withNotify, bool newLevel)
         {
-            levelData = await GetLevelDataAsync(cancellationToken);
+            if (withNotify) isLoaded.Value = false;
+            await LoadLevelDataAsync(newLevel, destroyCancellationToken);
+            await SaveDataAsync(destroyCancellationToken);
+            if (withNotify) isLoaded.Value = true;
+        }
+
+        private async UniTask LoadLevelDataAsync(bool newLevel, CancellationToken cancellationToken)
+        {
+            if (isLoading) return;
+            isLoading = true;
+
+            bool needLoad = newLevel || levelData == null;
+            levelData = needLoad ? await GetLevelDataAsync(cancellationToken) : levelData;
             if (levelData != null)
             {
                 savedData.ElementsGrid = levelData.ElementsGrid;
-                isLoaded.Value = true;
             }
+            isLoading = false;
         }
 
         private async UniTask<LevelData> GetLevelDataAsync(CancellationToken cancellationToken)

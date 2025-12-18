@@ -302,9 +302,10 @@ namespace Elements.Systems
             }
             else
             {
+                levelSystem.QuietLoadNextLevel().Forget();
                 normalizeSequence.OnComplete(() =>
                 {
-                    levelSystem.LoadNextLevel().Forget();
+                    levelSystem.RestartLevel().Forget();
                     tweens.Remove(normalizeSequence);
                 });
             }
