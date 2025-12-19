@@ -1,14 +1,18 @@
 using Cysharp.Threading.Tasks;
 using Elements.Systems;
+using System;
 using System.Threading;
 using UnityEngine;
 using Zenject;
+using Random = UnityEngine.Random;
 
 namespace Elements.Entities.Background
 {
     public class BackgroundObject : MonoBehaviour, IPoolable<float, float, IMemoryPool>
     {
         public class Pool : MonoPoolableMemoryPool<float, float, IMemoryPool, BackgroundObject> { }
+
+        public event Action<BackgroundObject> OnDespawnedEvent;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
 
@@ -26,9 +30,14 @@ namespace Elements.Entities.Background
         [Inject]
         public void Construct(BackgroundSettings backgroundSettings)
         {
-            settings = backgroundSettings;
+            UpdateSettings(backgroundSettings);
             halfSpriteX = spriteRenderer.bounds.extents.x;
             spriteY = spriteRenderer.bounds.size.y;
+        }
+
+        public void UpdateSettings(BackgroundSettings backgroundSettings)
+        {
+            settings = backgroundSettings;
         }
 
         public void OnSpawned(float direction, float speed, IMemoryPool pool)
@@ -47,6 +56,7 @@ namespace Elements.Entities.Background
         {
             gameObject.SetActive(false);
             StopUniTask();
+            OnDespawnedEvent?.Invoke(this);
         }
 
         private void RecalculateStartPosition()

@@ -13,6 +13,7 @@ namespace Elements.MemoryPools
 
         private readonly DiContainer _container;
         private readonly Dictionary<int, BackgroundObject.Pool> _pools = new();
+        private readonly List<BackgroundObject> _currentlyActive = new();
 
         public BackgroundObjectPool(DiContainer container)
         {
@@ -23,7 +24,13 @@ namespace Elements.MemoryPools
         {
             this.startCount = startCount;
             this.maxCount = maxCount;
+            UpdateSettings(settings);
+        }
+
+        public void UpdateSettings(BackgroundSettings settings)
+        {
             this.settings = settings;
+            UpdateObjectSettings();
         }
 
         public BackgroundObject Spawn(BackgroundObject prefab, float direction, float speed)
@@ -46,7 +53,12 @@ namespace Elements.MemoryPools
                 _pools.Add(prefabId, pool);
             }
 
-            return pool.Spawn(direction, speed, pool);
+            BackgroundObject backgroundObject = pool.Spawn(direction, speed, pool);
+            backgroundObject.UpdateSettings(settings);
+            backgroundObject.OnDespawnedEvent += BackgroundObject_OnDespawnedEvent;
+            _currentlyActive.Add(backgroundObject);
+
+            return backgroundObject;
         }
 
         public int GetActiveCount()
@@ -57,6 +69,20 @@ namespace Elements.MemoryPools
                 count += pool.Value.NumActive;
             }
             return count;
+        }
+
+        private void UpdateObjectSettings()
+        {
+            foreach (var obj in _currentlyActive)
+            {
+                obj.UpdateSettings(settings);
+            }
+        }
+
+        private void BackgroundObject_OnDespawnedEvent(BackgroundObject backgroundObject)
+        {
+            backgroundObject.OnDespawnedEvent -= BackgroundObject_OnDespawnedEvent;
+            _currentlyActive.Remove(backgroundObject);
         }
     }
 }

@@ -18,6 +18,7 @@ namespace Elements.Systems
         [Inject] private CameraSystem cameraSystem;
         [Inject] private BackgroundObjectPool backgroundObjectPool;
 
+        private bool isSpawnInitialized;
         private BackgroundSettings backgroundSettings;
 
         public void SetupBackground()
@@ -52,8 +53,16 @@ namespace Elements.Systems
 
             if (backgroundObjectPrefabs.Count > 0)
             {
-                backgroundObjectPool.Initialize(backgroundConfig.MaxObjectCountOnScreen, backgroundConfig.MaxObjectCountOnScreen, backgroundSettings);
-                SpawnLoopAsync(destroyCancellationToken).Forget();
+                if (!isSpawnInitialized)
+                {
+                    isSpawnInitialized = true;
+                    backgroundObjectPool.Initialize(backgroundConfig.MaxObjectCountOnScreen, backgroundConfig.MaxObjectCountOnScreen, backgroundSettings);
+                    SpawnLoopAsync(destroyCancellationToken).Forget();
+                }
+                else
+                {
+                    backgroundObjectPool.UpdateSettings(backgroundSettings);
+                }
             }
         }
 
