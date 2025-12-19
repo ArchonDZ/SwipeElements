@@ -25,6 +25,8 @@ namespace Elements.Systems
         int columns;
         int rows;
 
+        private Vector2 clickDownPoint;
+        private Vector2 clickUpPoint;
         private Vector2Int element1Coord;
         private Vector2Int element2Coord;
 
@@ -56,14 +58,23 @@ namespace Elements.Systems
 
         private void OnClickDown(Vector2 vector2)
         {
-            Vector2 screenPoint = cameraSystem.MainCamera.ScreenToWorldPoint(vector2);
-            element1Coord = new(Mathf.FloorToInt(screenPoint.x), Mathf.FloorToInt(screenPoint.y));
+            clickDownPoint = cameraSystem.MainCamera.ScreenToWorldPoint(vector2);
+            element1Coord = new(Mathf.FloorToInt(clickDownPoint.x), Mathf.FloorToInt(clickDownPoint.y));
         }
 
         private void OnClickUp(Vector2 vector2)
         {
-            Vector2 screenPoint = cameraSystem.MainCamera.ScreenToWorldPoint(vector2);
-            element2Coord = new(Mathf.FloorToInt(screenPoint.x), Mathf.FloorToInt(screenPoint.y));
+            clickUpPoint = cameraSystem.MainCamera.ScreenToWorldPoint(vector2);
+
+            Vector2 delta = clickUpPoint - clickDownPoint;
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                element2Coord = element1Coord + (delta.x > 0 ? Vector2Int.right : Vector2Int.left);
+            }
+            else
+            {
+                element2Coord = element1Coord + (delta.y > 0 ? Vector2Int.up : Vector2Int.down);
+            }
 
             TrySwapElements();
         }
